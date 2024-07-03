@@ -2,7 +2,6 @@ package com.polaris.project.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.polaris.project.model.dto.post.PostQueryRequest;
-import com.polaris.project.model.entity.Post;
 
 import javax.annotation.Resource;
 import org.junit.jupiter.api.Assertions;

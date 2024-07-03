@@ -2,8 +2,7 @@ package com.polaris.project.esdao;
 
 import com.polaris.project.model.dto.post.PostEsDTO;
 import com.polaris.project.model.dto.post.PostQueryRequest;
-import com.polaris.project.model.entity.Post;
-import com.polaris.project.service.PostService;
+
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;

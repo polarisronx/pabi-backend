@@ -1,4 +1,4 @@
-package com.polaris.project.common;
+package com.polaris.project.model.dto;
 
 import java.io.Serializable;
 import lombok.Data;
