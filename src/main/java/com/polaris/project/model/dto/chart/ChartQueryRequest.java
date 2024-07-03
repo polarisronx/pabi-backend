@@ -1,6 +1,6 @@
 package com.polaris.project.model.dto.chart;
 
-import com.polaris.project.common.PageRequest;
+import com.polaris.project.model.dto.PageRequest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
