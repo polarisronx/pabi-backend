@@ -10,9 +10,8 @@ import javax.annotation.Resource;
 import java.util.Map;
 
 /**
- * @author adorabled4
+ * @author polaris
  * @className StrategySelector
- * @date : 2023/08/30/ 12:07
  **/
 @Component
 public class StrategySelector {
