@@ -7,6 +7,7 @@ import com.google.common.cache.CacheBuilder;
 import com.polaris.project.annotation.BlackListInterceptor;
 import com.polaris.project.common.ErrorCode;
 import com.polaris.project.exception.BusinessException;
+import com.polaris.project.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
@@ -22,10 +23,12 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static com.polaris.project.constant.CommonConstant.LIMIT_PREFIX;
@@ -35,8 +38,10 @@ import static com.polaris.project.constant.CommonConstant.LIMIT_PREFIX;
 @Component
 @Slf4j
 public class RageLimitInterceptor {
+    private static final String DEFAULT_KEY = "defaultKey";
     private final RedissonClient redissonClient;
-
+    @Resource
+    private UserService userService;
     private RMapCache<String, Long> blacklist;
 
     // 用来存储用户ID与对应的RateLimiter对象
@@ -85,15 +90,18 @@ public class RageLimitInterceptor {
         if (StringUtils.isBlank(key)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "拦截的 key 不能为空");
         }
-
+        String business = blacklistInterceptor.business();
         // 获取拦截字段
         String keyAttr;
         if (key.equals("default")) {
             keyAttr = StpUtil.getLoginId().toString();
-        } else {
+        } else if(business.equals("invoke")){
+            keyAttr = getUserAccount(jp.getArgs());
+        } else if(business.equals("register") || key.equals("login")){
+            log.info(Arrays.toString(jp.getArgs()));
             keyAttr = getAttrValue(key, jp.getArgs());
-        }
-        keyAttr=LIMIT_PREFIX + blacklistInterceptor.business() + ":" + keyAttr;
+        } else keyAttr = DEFAULT_KEY;
+        keyAttr=LIMIT_PREFIX + business + ":" + keyAttr;
         log.info("aop attr {}", keyAttr);
 
         // 黑名单拦截
@@ -128,6 +136,16 @@ public class RageLimitInterceptor {
 
         // 返回结果放行
         return jp.proceed();
+    }
+
+    private String getUserAccount (Object[] args){
+        for(Object arg:args){
+            if(arg instanceof HttpServletRequest){
+                return userService.getLoginUser((HttpServletRequest) arg).getUserAccount();
+            }
+        }
+        log.error("获取用户账号失败");
+        return null;
     }
 
     /**
