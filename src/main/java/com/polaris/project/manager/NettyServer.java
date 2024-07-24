@@ -72,7 +72,6 @@ public class NettyServer {
             sb.option(ChannelOption.SO_BACKLOG, 1024);
             sb.group(bossGroup, workerGroup) // 绑定线程池
                     .channel(NioServerSocketChannel.class) // 指定使用的channel
-                    .localAddress(6848)// 绑定监听端口
                     .childHandler(new ChannelInitializer<SocketChannel>() { // 绑定客户端连接时候触发操作
 
                         @Override
@@ -91,8 +90,8 @@ public class NettyServer {
 
 
                         }
-                    });
-            channelFuture = sb.bind().sync(); // 服务器异步创建绑定
+                    });// 绑定监听端口;
+            channelFuture = sb.bind("0.0.0.0",6848).sync(); // 服务器异步创建绑定
             log.info(NettyServer.class + " 启动正在监听： " + channelFuture.channel().localAddress());
             channelFuture.channel().closeFuture().sync(); // 关闭服务器通道
         } finally {

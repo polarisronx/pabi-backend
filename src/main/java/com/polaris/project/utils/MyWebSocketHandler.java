@@ -2,17 +2,12 @@ package com.polaris.project.utils;
 
 import com.alibaba.fastjson2.JSON;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
-import io.netty.handler.timeout.IdleState;
-import io.netty.handler.timeout.IdleStateEvent;
-import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -31,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MyWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
 
 
-    public static final Map<String, ChannelHandlerContext> webSocketMap = new ConcurrentHashMap<>();
+    public static final Map<String, ChannelHandlerContext> SocketMap = new ConcurrentHashMap<>();
 
 
 
@@ -47,7 +42,13 @@ public class MyWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocke
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         log.info("与客户端断开连接，通道关闭！");
         //添加到channelGroup 通道组
+
         ChannelHandlerPool.channelGroup.remove(ctx.channel());
+        SocketMap.forEach((k, v)->{
+            if(v.channel().id().equals(ctx.channel().id())){
+                SocketMap.remove(k);
+            }
+        });
     }
 
     @Override
@@ -58,7 +59,7 @@ public class MyWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocke
             String uri = request.uri();
 
             Map paramMap=getUrlParams(uri);
-            webSocketMap.put(paramMap.get("id").toString(),ctx);
+            SocketMap.put(paramMap.get("id").toString(),ctx);
             log.info("接收到的参数是：" + JSON.toJSONString(paramMap));
 
             //如果url包含参数，需要处理
@@ -72,7 +73,7 @@ public class MyWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocke
             //正常的TEXT消息类型
             TextWebSocketFrame frame=(TextWebSocketFrame)msg;
             log.info("客户端收到服务器数据：" +frame.text());
-            ctx.writeAndFlush(new TextWebSocketFrame("Hello,与服务器的连接已建立！"));
+//            ctx.writeAndFlush(new TextWebSocketFrame("Hello,与服务器的连接已建立！"));
         }
         super.channelRead(ctx, msg);
     }
@@ -118,7 +119,7 @@ public class MyWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocke
     }
 
     public static void sendMessage(String id,String message){
-        ChannelHandlerContext ctx = webSocketMap.get(id);
+        ChannelHandlerContext ctx = SocketMap.get(id);
         if (ctx != null) {
             log.info("发送给客户端消息：" + message);
             ctx.channel().writeAndFlush(new TextWebSocketFrame(message));
